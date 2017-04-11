@@ -40,8 +40,28 @@ class Entries(db.Model):
 
 class MainPage(Handler):
     def render_front(self, title="", entry="", error=""):
-        entries = db.GqlQuery("SELECT * FROM Entries " "ORDER BY created DESC LIMIT 5 ")
-        self.render("front.html", title=title, entry=entry, error=error, entries=entries)
+        self.render("front.html", title=title, entry=entry, error=error)
+
+    def get(self):
+        self.render_front()
+
+    def post(self):
+        title = self.request.get('title')
+        entry = self.request.get('entry')
+
+        if title and entry:
+            a = Entries(title = title, entry = entry)
+            a.put()
+
+            self.redirect("/blog")
+
+        else:
+            error = "We need both a title and some content!"
+            self.render_front(title, entry, error)
+
+class NewPost(Handler):
+    def render_front(self, title="", entry="", error=""):
+        self.render("front.html", title=title, entry=entry, error=error)
 
     def get(self):
         self.render_front()
@@ -61,25 +81,19 @@ class MainPage(Handler):
             self.render_front(title, entry, error)
 
 class BlogPage(Handler):
-    def render_front(self, title="", entry="", error=""):
+    def render_blog(self, title="", entry=""):
         entries = db.GqlQuery("SELECT * FROM Entries " "ORDER BY created DESC LIMIT 5 ")
-        self.render("blog-submissions.html", title=title, entry=entry, error=error, entries=entries)
+        self.render("blog-submissions.html", title=title, entry=entry, entries=entries)
 
     def get(self):
         title = self.request.get('title')
         entry = self.request.get('entry')
 
-        if title and entry:
-            a = Entries(title = title, entry = entry)
-            a.put()
 
-            self.redirect("/blog")
-
-        else:
-            error = "We need both a title and some content!"
-            self.render_front(title, entry, error)
+        self.render_blog(title, entry)
 
 app = webapp2.WSGIApplication([
     ('/', MainPage),
-    ('/blog', BlogPage)
+    ('/blog', BlogPage),
+    ('/newpost', NewPost)
 ], debug=True)
