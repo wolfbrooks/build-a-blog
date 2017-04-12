@@ -4,13 +4,15 @@
 
 {% for entry in entries %}
     <div class="entry">
-        <div class="entry-title">{{entry.title}}</div>
+        <div class="entry-title">
+        <a href="/blog/<id:\d+>">{{entry.title}}</a>
+        </div>
         <pre class="entry-body">{{entry.entry}}</pre>
     </div>
 {% endfor %}
 
     <h3>
-        <a href="/newpost">Enter a new post</a>
+        <a href="/newpost">Create a new post</a>
     </h3>
 
 {% endblock %}

@@ -33,6 +33,11 @@ class Handler(webapp2.RequestHandler):
     def render(self, template, **kw):
         self.write(self.render_str(template, **kw))
 
+    def renderError(self, error_code):
+        self.error(error_code)
+        self.response.write("Oops! Something went wrong.")
+
+
 class Entries(db.Model):
     title = db.StringProperty(required = True)
     entry = db.TextProperty(required = True)
@@ -92,8 +97,13 @@ class BlogPage(Handler):
 
         self.render_blog(title, entry)
 
+class ViewPostHandler(Handler):
+    def get(self, id):
+        self.response.write(id)
+
 app = webapp2.WSGIApplication([
     ('/', MainPage),
     ('/blog', BlogPage),
-    ('/newpost', NewPost)
+    ('/newpost', NewPost),
+    webapp2.Route('/blog/<id:\d+>', ViewPostHandler)
 ], debug=True)
