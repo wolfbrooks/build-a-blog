@@ -17,6 +17,7 @@
 import webapp2
 import jinja2
 import os
+import cgi
 from google.appengine.ext import db
 
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
@@ -37,6 +38,8 @@ class Handler(webapp2.RequestHandler):
         self.error(error_code)
         self.response.write("Oops! Something went wrong.")
 
+    def get_posts(limit, offset):
+        entries = db.GqlQuery("SELECT * FROM Entries ORDER BY created DESC LIMIT 5 OFFSET '%s'" % offset)
 
 class Entries(db.Model):
     title = db.StringProperty(required = True)
@@ -58,7 +61,8 @@ class MainPage(Handler):
             a = Entries(title = title, entry = entry)
             a.put()
 
-            self.redirect("/blog")
+            id = a.key().id()
+            self.redirect("/blog/" + str(id))
 
         else:
             error = "We need both a title and some content!"
@@ -79,7 +83,8 @@ class NewPost(Handler):
             a = Entries(title = title, entry = entry)
             a.put()
 
-            self.redirect("/blog")
+            id = a.key().id()
+            self.redirect("/blog/" + str(id))
 
         else:
             error = "We need both a title and some content!"
@@ -98,12 +103,32 @@ class BlogPage(Handler):
         self.render_blog(title, entry)
 
 class ViewPostHandler(Handler):
+    def render_perma(self, title="", entry="", error=""):
+        self.render("permalink.html", title=title, entry=entry, error=error)
+
     def get(self, id):
-        self.response.write(id)
+
+        entry = db.GqlQuery("SELECT * FROM Entries WHERE ID = 'id'")
+        blogpost = Entries.get_by_id(int(id))
+
+        if blogpost:
+            title = blogpost.title
+            entry = blogpost.entry
+            created = blogpost.created
+
+            t = jinja_env.get_template("permalink.html")
+            content = t.render(blogpost = blogpost, title = title, entry = entry, created = created)
+            self.response.write(content)
+        else:
+            error = "I'm sorry but it seems that post does not exist"
+            self.render_perma(error)
+
+
+
 
 app = webapp2.WSGIApplication([
     ('/', MainPage),
     ('/blog', BlogPage),
-    ('/newpost', NewPost),
+    ('/blog/newpost', NewPost),
     webapp2.Route('/blog/<id:\d+>', ViewPostHandler)
 ], debug=True)
